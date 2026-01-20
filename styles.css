@@ -692,6 +692,7 @@ body {
 
 /* ===== PRODUCTS & INVENTORY PAGES ===== */
 .page-actions {
+  padding-top: var(--spacing-sm);
   margin-bottom: var(--spacing-xl);
 }
 
