@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fresh Produce POS - Philippine Wet Market</title>
+    <meta
+      name="description"
+      content="Complete Point of Sale system for Philippine wet market products - fresh vegetables, fruits, meat, seafood and more"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <span class="logo-icon">🌿</span>
+          <span class="logo-text">Fresh Produce</span>
+        </div>
+      </div>
+
+      <ul class="sidebar-menu">
+        <li class="menu-item active" data-page="pos">
+          <span class="menu-icon">🛒</span>
+          <span class="menu-text">Point of Sale</span>
+        </li>
+        <li class="menu-item" data-page="products">
+          <span class="menu-icon">📦</span>
+          <span class="menu-text">Products</span>
+        </li>
+        <li class="menu-item" data-page="inventory">
+          <span class="menu-icon">📊</span>
+          <span class="menu-text">Inventory</span>
+        </li>
+        <li class="menu-item" data-page="sales">
+          <span class="menu-icon">💰</span>
+          <span class="menu-text">Sales Report</span>
+        </li>
+        <li class="menu-item" data-page="settings">
+          <span class="menu-icon">⚙️</span>
+          <span class="menu-text">Settings</span>
+        </li>
+      </ul>
+
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <span class="user-icon">👤</span>
+          <span class="user-text">Admin User</span>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Header -->
+      <header class="top-header">
+        <div class="header-left">
+          <h1 id="page-title">Point of Sale</h1>
+          <p class="header-subtitle" id="page-subtitle">
+            Process customer transactions
+          </p>
+        </div>
+        <div class="header-right">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input
+              type="text"
+              id="global-search"
+              placeholder="Search products..."
+            />
+          </div>
+          <div class="date-time" id="datetime"></div>
+        </div>
+      </header>
+
+      <!-- POS Page -->
+      <section class="page active" id="pos-page">
+        <div class="pos-container">
+          <!-- Product Categories & Grid -->
+          <div class="products-section">
+            <div class="category-filters">
+              <button class="category-btn active" data-category="all">
+                All
+              </button>
+              <button class="category-btn" data-category="vegetables">
+                🥬 Vegetables
+              </button>
+              <button class="category-btn" data-category="fruits">
+                🍎 Fruits
+              </button>
+              <button class="category-btn" data-category="meat">🥩 Meat</button>
+              <button class="category-btn" data-category="seafood">
+                🐟 Seafood
+              </button>
+              <button class="category-btn" data-category="poultry">
+                🐔 Poultry
+              </button>
+              <button class="category-btn" data-category="spices">
+                🌶️ Spices
+              </button>
+            </div>
+
+            <div class="products-grid" id="products-grid">
+              <!-- Products will be dynamically loaded here -->
+            </div>
+          </div>
+
+          <!-- Cart Section -->
+          <div class="cart-section">
+            <div class="cart-header">
+              <h2>Current Order</h2>
+              <button class="clear-cart-btn" id="clear-cart">Clear</button>
+            </div>
+
+            <div class="cart-items" id="cart-items">
+              <div class="empty-cart">
+                <span class="empty-icon">🛒</span>
+                <p>Cart is empty</p>
+              </div>
+            </div>
+
+            <div class="cart-summary">
+              <div class="summary-row">
+                <span>Subtotal:</span>
+                <span id="subtotal">₱0.00</span>
+              </div>
+              <div class="summary-row">
+                <span>Tax (12%):</span>
+                <span id="tax">₱0.00</span>
+              </div>
+              <div class="summary-row total">
+                <span>Total:</span>
+                <span id="total">₱0.00</span>
+              </div>
+            </div>
+
+            <button class="checkout-btn" id="checkout-btn">
+              <span>Checkout</span>
+              <span class="btn-icon">→</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Products Management Page -->
+      <section class="page" id="products-page">
+        <div class="page-actions">
+          <button class="primary-btn" id="add-product-btn">
+            <span>➕</span>
+            Add New Product
+          </button>
+        </div>
+
+        <div class="products-table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Product Name</th>
+                <th>Category</th>
+                <th>Price</th>
+                <th>Stock</th>
+                <th>Unit</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="products-table-body">
+              <!-- Products will be loaded here -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Inventory Management Page -->
+      <section class="page" id="inventory-page">
+        <div class="inventory-stats">
+          <div class="stat-card">
+            <div class="stat-icon">📦</div>
+            <div class="stat-info">
+              <h3 id="total-products">0</h3>
+              <p>Total Products</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">⚠️</div>
+            <div class="stat-info">
+              <h3 id="low-stock">0</h3>
+              <p>Low Stock Items</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">❌</div>
+            <div class="stat-info">
+              <h3 id="out-of-stock">0</h3>
+              <p>Out of Stock</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">💵</div>
+            <div class="stat-info">
+              <h3 id="inventory-value">₱0</h3>
+              <p>Inventory Value</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="inventory-table-container">
+          <h2>Inventory Status</h2>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Category</th>
+                <th>Current Stock</th>
+                <th>Unit</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="inventory-table-body">
+              <!-- Inventory items will be loaded here -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Sales Report Page -->
+      <section class="page" id="sales-page">
+        <div class="sales-filters">
+          <button class="filter-btn active" data-period="today">Today</button>
+          <button class="filter-btn" data-period="week">This Week</button>
+          <button class="filter-btn" data-period="month">This Month</button>
+          <button class="filter-btn" data-period="all">All Time</button>
+        </div>
+
+        <div class="sales-stats">
+          <div class="stat-card">
+            <div class="stat-icon">💰</div>
+            <div class="stat-info">
+              <h3 id="total-sales">₱0.00</h3>
+              <p>Total Sales</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">🧾</div>
+            <div class="stat-info">
+              <h3 id="total-transactions">0</h3>
+              <p>Transactions</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">📈</div>
+            <div class="stat-info">
+              <h3 id="avg-transaction">₱0.00</h3>
+              <p>Avg. Transaction</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">🏆</div>
+            <div class="stat-info">
+              <h3 id="top-product">-</h3>
+              <p>Top Product</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="sales-table-container">
+          <h2>Recent Transactions</h2>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Transaction ID</th>
+                <th>Date & Time</th>
+                <th>Items</th>
+                <th>Total Amount</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="sales-table-body">
+              <!-- Sales transactions will be loaded here -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Settings Page -->
+      <section class="page" id="settings-page">
+        <div class="settings-container">
+          <h2>System Settings</h2>
+          <div class="settings-grid">
+            <div class="setting-item">
+              <label for="store-name">Store Name</label>
+              <input type="text" id="store-name" value="Fresh Produce Market" />
+            </div>
+            <div class="setting-item">
+              <label for="tax-rate">Tax Rate (%)</label>
+              <input type="number" id="tax-rate" value="12" step="0.1" />
+            </div>
+            <div class="setting-item">
+              <label for="currency">Currency</label>
+              <select id="currency">
+                <option value="PHP" selected>Philippine Peso (₱)</option>
+                <option value="USD">US Dollar ($)</option>
+              </select>
+            </div>
+            <div class="setting-item">
+              <label for="low-stock-threshold">Low Stock Alert</label>
+              <input type="number" id="low-stock-threshold" value="10" />
+            </div>
+          </div>
+          <button class="primary-btn" id="save-settings">Save Settings</button>
+        </div>
+      </section>
+    </main>
+
+    <!-- Modal for Product Form -->
+    <div class="modal" id="product-modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="modal-title">Add New Product</h2>
+          <button class="close-modal" id="close-modal">×</button>
+        </div>
+        <form id="product-form">
+          <div class="form-group">
+            <label for="product-name">Product Name</label>
+            <input type="text" id="product-name" required />
+          </div>
+          <div class="form-group">
+            <label for="product-category">Category</label>
+            <select id="product-category" required>
+              <option value="vegetables">Vegetables</option>
+              <option value="fruits">Fruits</option>
+              <option value="meat">Meat</option>
+              <option value="seafood">Seafood</option>
+              <option value="poultry">Poultry</option>
+              <option value="spices">Spices</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="product-price">Price (₱)</label>
+            <input type="number" id="product-price" step="0.01" required />
+          </div>
+          <div class="form-group">
+            <label for="product-stock">Stock Quantity</label>
+            <input type="number" id="product-stock" required />
+          </div>
+          <div class="form-group">
+            <label for="product-unit">Unit</label>
+            <select id="product-unit" required>
+              <option value="kg">Kilogram (kg)</option>
+              <option value="pc">Piece (pc)</option>
+              <option value="bundle">Bundle</option>
+              <option value="pack">Pack</option>
+            </select>
+          </div>
+          <div class="form-actions">
+            <button type="button" class="secondary-btn" id="cancel-form">
+              Cancel
+            </button>
+            <button type="submit" class="primary-btn">Save Product</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal for Checkout -->
+    <div class="modal" id="checkout-modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Complete Transaction</h2>
+          <button class="close-modal" id="close-checkout">×</button>
+        </div>
+        <div class="checkout-summary">
+          <div class="summary-item">
+            <span>Total Amount:</span>
+            <span class="amount" id="checkout-total">₱0.00</span>
+          </div>
+          <div class="form-group">
+            <label for="payment-amount">Payment Received (₱)</label>
+            <input
+              type="number"
+              id="payment-amount"
+              step="0.01"
+              placeholder="0.00"
+            />
+          </div>
+          <div class="summary-item change-display">
+            <span>Change:</span>
+            <span class="amount" id="change-amount">₱0.00</span>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="secondary-btn" id="cancel-checkout">
+            Cancel
+          </button>
+          <button type="button" class="primary-btn" id="complete-sale">
+            Complete Sale
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal for Stock Update -->
+    <div class="modal" id="stock-modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Update Stock</h2>
+          <button class="close-modal" id="close-stock">×</button>
+        </div>
+        <form id="stock-form">
+          <div class="form-group">
+            <label id="stock-product-name">Product Name</label>
+          </div>
+          <div class="form-group">
+            <label for="stock-quantity">New Stock Quantity</label>
+            <input type="number" id="stock-quantity" required />
+          </div>
+          <div class="form-actions">
+            <button type="button" class="secondary-btn" id="cancel-stock">
+              Cancel
+            </button>
+            <button type="submit" class="primary-btn">Update Stock</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
