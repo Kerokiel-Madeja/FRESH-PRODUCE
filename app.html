@@ -112,11 +112,19 @@
             </div>
           </div>
 
+          <!-- Floating Cart Button (Mobile Only) -->
+          <button class="floating-cart-btn" id="floating-cart-btn">
+            🛒 <span class="cart-count" id="cart-count">0</span>
+          </button>
+
           <!-- Cart Section -->
-          <div class="cart-section">
+          <div class="cart-section" id="cart-section">
             <div class="cart-header">
               <h2>Current Order</h2>
-              <button class="clear-cart-btn" id="clear-cart">Clear</button>
+              <div class="cart-header-actions">
+                <button class="close-cart-btn" id="close-cart-btn">✕</button>
+                <button class="clear-cart-btn" id="clear-cart">Clear</button>
+              </div>
             </div>
 
             <div class="cart-items" id="cart-items">

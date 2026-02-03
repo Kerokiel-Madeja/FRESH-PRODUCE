@@ -416,6 +416,14 @@ function initializeEventListeners() {
     .getElementById("global-search")
     .addEventListener("input", handleGlobalSearch);
 
+  // Floating cart toggle (mobile)
+  document
+    .getElementById("floating-cart-btn")
+    .addEventListener("click", toggleCart);
+  document
+    .getElementById("close-cart-btn")
+    .addEventListener("click", toggleCart);
+
   // Close modals on outside click
   document.querySelectorAll(".modal").forEach((modal) => {
     modal.addEventListener("click", (e) => {
@@ -557,7 +565,13 @@ function handleGlobalSearch(e) {
     .join("");
 }
 
-// ===== CART MANAGEMENT =====
+// Toggle mobile cart
+function toggleCart() {
+  const cartSection = document.getElementById("cart-section");
+  cartSection.classList.toggle("active");
+}
+
+// Cart management
 function addToCart(productId) {
   const product = products.find((p) => p.id === productId);
 
@@ -674,6 +688,10 @@ function updateCartSummary() {
 
   const checkoutBtn = document.getElementById("checkout-btn");
   checkoutBtn.disabled = cart.length === 0;
+
+  // Update cart count badge
+  const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+  document.getElementById("cart-count").textContent = totalItems;
 }
 
 // ===== CHECKOUT =====
