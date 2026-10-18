@@ -556,6 +556,127 @@
       </div>
     </div>
 
+    <!-- Modal for Receipt -->
+    <div class="modal receipt-modal-wrap" id="receipt-modal">
+      <div class="receipt-paper" id="receipt-paper">
+        <button class="receipt-close-btn no-print" id="close-receipt-btn" aria-label="Close receipt">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+
+        <!-- Top Header -->
+        <div class="receipt-header">
+          <div class="receipt-title-row">
+            <h2 class="receipt-main-title">Receipt</h2>
+            <span class="receipt-datetime" id="receipt-datetime">00.00.0000, 00:00:00</span>
+          </div>
+          <div class="receipt-id-row">
+            <span class="receipt-id" id="receipt-id">#1</span>
+          </div>
+        </div>
+
+        <!-- Line-Items Section -->
+        <div class="receipt-section">
+          <div class="receipt-section-title">Line-Items</div>
+          <div class="receipt-divider"></div>
+          <table class="receipt-table" id="receipt-items-table">
+            <thead>
+              <tr>
+                <th class="col-qty"></th>
+                <th class="col-desc">Description</th>
+                <th class="col-vat">VAT</th>
+                <th class="col-price" id="receipt-currency-head">PHP</th>
+              </tr>
+            </thead>
+            <tbody id="receipt-items-body">
+              <!-- Rendered dynamically -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Total Sum Row -->
+        <div class="receipt-divider bold-divider"></div>
+        <div class="receipt-sum-row">
+          <span class="receipt-sum-label">Sum incl. VAT</span>
+          <span class="receipt-sum-value" id="receipt-total-val">₱0.00</span>
+        </div>
+        <div class="receipt-divider bold-divider"></div>
+
+        <!-- VAT Breakdown Table -->
+        <div class="receipt-vat-breakdown">
+          <div class="vat-col">
+            <span class="vat-head">VAT</span>
+            <span class="vat-val" id="receipt-vat-rate">12%</span>
+          </div>
+          <div class="vat-col">
+            <span class="vat-head">Net</span>
+            <span class="vat-val" id="receipt-vat-net">0.00</span>
+          </div>
+          <div class="vat-col">
+            <span class="vat-head">VAT</span>
+            <span class="vat-val" id="receipt-vat-amount">0.00</span>
+          </div>
+          <div class="vat-col">
+            <span class="vat-head">Gross</span>
+            <span class="vat-val" id="receipt-vat-gross">0.00</span>
+          </div>
+        </div>
+
+        <!-- Payment & Change Details -->
+        <div class="receipt-tender-summary">
+          <div class="tender-row">
+            <span>Payment Received:</span>
+            <span id="receipt-payment-received">₱0.00</span>
+          </div>
+          <div class="tender-row">
+            <span>Change:</span>
+            <span id="receipt-payment-change">₱0.00</span>
+          </div>
+        </div>
+
+        <!-- QR Code -->
+        <div class="receipt-qr-wrap">
+          <div class="receipt-qr-code" id="receipt-qr-container">
+            <!-- QR SVG generated dynamically -->
+          </div>
+        </div>
+
+        <!-- Combine it with (Cross-sell recommendations) -->
+        <div class="receipt-recommend-section">
+          <div class="receipt-section-title">Combine it with</div>
+          <div class="receipt-divider"></div>
+          <div class="receipt-recommend-grid" id="receipt-recommend-grid">
+            <!-- Dynamically populated recommendations -->
+          </div>
+        </div>
+
+        <!-- Footer Actions -->
+        <div class="receipt-footer">
+          <button type="button" class="receipt-action-btn receipt-print-btn no-print" id="receipt-print-action">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 6 2 18 2 18 9"></polyline>
+              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+              <rect x="6" y="14" width="12" height="8"></rect>
+            </svg>
+            Print Receipt
+          </button>
+
+          <a href="javascript:void(0)" class="receipt-pdf-link no-print" id="receipt-pdf-link">Save receipt as PDF</a>
+
+          <button type="button" class="receipt-action-btn receipt-new-btn no-print" id="receipt-done-action">
+            Done & New Sale
+          </button>
+
+          <p class="receipt-rendered-note">This receipt was digitally issued by Fresh Produce Market POS system</p>
+        </div>
+
+        <!-- Serrated Paper Edge Effect -->
+        <div class="receipt-serrated-bottom" aria-hidden="true"></div>
+      </div>
+    </div>
+
     <script src="app.js"></script>
   </body>
 </html>

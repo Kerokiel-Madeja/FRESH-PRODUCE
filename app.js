@@ -182,6 +182,32 @@ function initializeEventListeners() {
     .getElementById("close-stock")
     .addEventListener("click", closeStockModal);
 
+  // Receipt modal listeners
+  const closeReceiptBtn = document.getElementById("close-receipt-btn");
+  if (closeReceiptBtn) {
+    closeReceiptBtn.addEventListener("click", closeReceiptModal);
+  }
+  const printReceiptBtn = document.getElementById("receipt-print-action");
+  if (printReceiptBtn) {
+    printReceiptBtn.addEventListener("click", printReceipt);
+  }
+  const pdfReceiptLink = document.getElementById("receipt-pdf-link");
+  if (pdfReceiptLink) {
+    pdfReceiptLink.addEventListener("click", printReceipt);
+  }
+  const doneReceiptBtn = document.getElementById("receipt-done-action");
+  if (doneReceiptBtn) {
+    doneReceiptBtn.addEventListener("click", closeReceiptModal);
+  }
+  const receiptModal = document.getElementById("receipt-modal");
+  if (receiptModal) {
+    receiptModal.addEventListener("click", (e) => {
+      if (e.target === receiptModal) {
+        closeReceiptModal();
+      }
+    });
+  }
+
   // Checkout payment handlers
   document
     .getElementById("payment-amount")
@@ -786,9 +812,8 @@ function completeSale() {
   closeCheckoutModal();
   closeMobileCart();
 
-  alert(
-    `Sale Completed Successfully!\nTotal: ₱${total.toFixed(2)}\nPayment: ₱${payment.toFixed(2)}\nChange: ₱${(payment - total).toFixed(2)}\n\nStock Deducted:\n${stockDeductionSummary.join("\n")}`,
-  );
+  // Display receipt modal with print button
+  showReceiptModal(transaction);
 }
 
 // ===== PRODUCT MANAGEMENT (PRODUCTS PAGE) =====
@@ -1143,17 +1168,7 @@ function handleSalesFilter(btn) {
 function viewTransactionDetails(transactionId) {
   const transaction = transactions.find((t) => Number(t.id) === Number(transactionId));
   if (!transaction) return;
-
-  const itemsList = transaction.items
-    .map(
-      (item) =>
-        `${item.name} - ${item.quantity} ${item.unit} × ₱${item.price.toFixed(2)} = ₱${(item.quantity * item.price).toFixed(2)}`,
-    )
-    .join("\n");
-
-  alert(
-    `Transaction #${transaction.id}\n\nItems:\n${itemsList}\n\nSubtotal: ₱${transaction.subtotal.toFixed(2)}\nTax: ₱${transaction.tax.toFixed(2)}\nTotal: ₱${transaction.total.toFixed(2)}\nPayment: ₱${transaction.payment.toFixed(2)}\nChange: ₱${transaction.change.toFixed(2)}`,
-  );
+  showReceiptModal(transaction);
 }
 
 // ===== SETTINGS =====
@@ -1191,4 +1206,349 @@ function capitalizeFirst(str) {
 function updateAllStats() {
   updateInventoryStats();
   updateSalesStats(transactions);
+}
+
+// ===== RECEIPT MODAL & PRINTING =====
+let currentReceiptTransaction = null;
+
+function showReceiptModal(transaction) {
+  currentReceiptTransaction = transaction;
+  const receiptModal = document.getElementById("receipt-modal");
+  if (!receiptModal) return;
+
+  const dateObj = new Date(transaction.date);
+  const formattedDate = formatReceiptDate(dateObj);
+  const datetimeEl = document.getElementById("receipt-datetime");
+  if (datetimeEl) datetimeEl.textContent = formattedDate;
+
+  // Receipt Number
+  const txIndex = transactions.findIndex((t) => Number(t.id) === Number(transaction.id));
+  const orderNumber = txIndex !== -1 ? (transactions.length - txIndex) : 1;
+  const receiptIdEl = document.getElementById("receipt-id");
+  if (receiptIdEl) receiptIdEl.textContent = `${orderNumber}`;
+
+  // Currency head & symbol
+  const currencySymbol = settings.currency === "PHP" ? "₱" : (settings.currency || "₱");
+  const currencyHead = document.getElementById("receipt-currency-head");
+  if (currencyHead) currencyHead.textContent = settings.currency || "PHP";
+
+  // Line Items
+  const itemsTbody = document.getElementById("receipt-items-body");
+  if (itemsTbody) {
+    itemsTbody.innerHTML = transaction.items
+      .map((item) => {
+        const itemTotal = (item.price * item.quantity).toFixed(2);
+        return `
+          <tr>
+            <td class="col-qty receipt-item-qty">${item.quantity} ${item.unit || "item"}</td>
+            <td class="col-desc receipt-item-name">${item.name}</td>
+            <td class="col-vat receipt-item-vat">${settings.taxRate}%</td>
+            <td class="col-price receipt-item-price">${currencySymbol}${itemTotal}</td>
+          </tr>
+        `;
+      })
+      .join("");
+  }
+
+  // Sum incl. VAT
+  const totalValEl = document.getElementById("receipt-total-val");
+  if (totalValEl) {
+    totalValEl.textContent = `${currencySymbol} ${transaction.total.toFixed(2)}`;
+  }
+
+  // VAT Breakdown Table
+  const vatRateEl = document.getElementById("receipt-vat-rate");
+  const vatNetEl = document.getElementById("receipt-vat-net");
+  const vatAmountEl = document.getElementById("receipt-vat-amount");
+  const vatGrossEl = document.getElementById("receipt-vat-gross");
+
+  if (vatRateEl) vatRateEl.textContent = `${settings.taxRate}%`;
+  if (vatNetEl) vatNetEl.textContent = `${currencySymbol}${transaction.subtotal.toFixed(2)}`;
+  if (vatAmountEl) vatAmountEl.textContent = `${currencySymbol}${transaction.tax.toFixed(2)}`;
+  if (vatGrossEl) vatGrossEl.textContent = `${currencySymbol}${transaction.total.toFixed(2)}`;
+
+  // Payment Received & Change
+  const payEl = document.getElementById("receipt-payment-received");
+  const changeEl = document.getElementById("receipt-payment-change");
+  if (payEl) payEl.textContent = `${currencySymbol}${(transaction.payment || transaction.total).toFixed(2)}`;
+  if (changeEl) changeEl.textContent = `${currencySymbol}${(transaction.change || 0).toFixed(2)}`;
+
+  // QR Code
+  const qrContainer = document.getElementById("receipt-qr-container");
+  if (qrContainer) {
+    const qrPayload = `RECEIPT:${transaction.id}|STORE:${settings.storeName || "Fresh Produce"}|TOTAL:${transaction.total.toFixed(2)}|DATE:${formattedDate}`;
+    qrContainer.innerHTML = generateQRCodeSVG(qrPayload);
+  }
+
+  // Cross-sell recommendations
+  renderReceiptRecommendations(transaction.items);
+
+  // Show modal
+  receiptModal.classList.add("active");
+}
+
+function closeReceiptModal() {
+  const receiptModal = document.getElementById("receipt-modal");
+  if (receiptModal) receiptModal.classList.remove("active");
+  currentReceiptTransaction = null;
+}
+
+function printReceipt() {
+  window.print();
+}
+
+function formatReceiptDate(d) {
+  const pad = (n) => String(n).padStart(2, "0");
+  const day = pad(d.getDate());
+  const month = pad(d.getMonth() + 1);
+  const year = d.getFullYear();
+  const hours = pad(d.getHours());
+  const minutes = pad(d.getMinutes());
+  const seconds = pad(d.getSeconds());
+  return `${day}.${month}.${year}, ${hours}:${minutes}:${seconds}`;
+}
+
+function renderReceiptRecommendations(currentItems = []) {
+  const grid = document.getElementById("receipt-recommend-grid");
+  if (!grid) return;
+
+  const boughtIds = new Set(currentItems.map((item) => Number(item.id)));
+  let candidates = products.filter((p) => !boughtIds.has(Number(p.id)) && p.stock > 0);
+  if (candidates.length < 3) {
+    candidates = products.filter((p) => p.stock > 0);
+  }
+
+  const picked = candidates.slice(0, 3);
+  const badges = ["Farm fresh", "Popular pick", "Pairs well"];
+  const currencySymbol = settings.currency === "PHP" ? "₱" : (settings.currency || "₱");
+
+  grid.innerHTML = picked
+    .map((product, idx) => {
+      const cat = (product.category || "vegetables").toLowerCase();
+      return `
+        <div class="receipt-rec-card">
+          <div class="receipt-rec-icon cat-${cat}">
+            ${getCategorySvg(cat)}
+          </div>
+          <span class="receipt-rec-badge">${badges[idx % badges.length]}</span>
+          <div class="receipt-rec-name" title="${product.name}">${product.name}</div>
+          <div class="receipt-rec-price">${currencySymbol}${product.price.toFixed(2)} / ${product.unit}</div>
+        </div>
+      `;
+    })
+    .join("");
+}
+
+// ===== QR CODE VECTOR GENERATOR (OFFLINE STANDALONE) =====
+function generateQRMatrix(text) {
+  const gfExp = new Array(512);
+  const gfLog = new Array(256);
+  let x = 1;
+  for (let i = 0; i < 255; i++) {
+    gfExp[i] = x;
+    gfLog[x] = i;
+    x <<= 1;
+    if (x & 256) x ^= 0x11d;
+  }
+  for (let i = 255; i < 512; i++) {
+    gfExp[i] = gfExp[i - 255];
+  }
+
+  function gfMul(x, y) {
+    if (x === 0 || y === 0) return 0;
+    return gfExp[gfLog[x] + gfLog[y]];
+  }
+
+  const size = 29;
+  const numDataCodewords = 44;
+  const numECCodewords = 26;
+
+  const utf8Bytes = [];
+  for (let i = 0; i < text.length; i++) {
+    let code = text.charCodeAt(i);
+    if (code < 128) utf8Bytes.push(code);
+    else if (code < 2048) {
+      utf8Bytes.push(192 | (code >> 6));
+      utf8Bytes.push(128 | (code & 63));
+    } else {
+      utf8Bytes.push(224 | (code >> 12));
+      utf8Bytes.push(128 | ((code >> 6) & 63));
+      utf8Bytes.push(128 | (code & 63));
+    }
+  }
+
+  const bitBuf = [];
+  function putBits(val, len) {
+    for (let i = len - 1; i >= 0; i--) {
+      bitBuf.push((val >>> i) & 1);
+    }
+  }
+
+  putBits(4, 4); // Byte mode
+  const count = Math.min(utf8Bytes.length, numDataCodewords - 3);
+  putBits(count, 8);
+  for (let i = 0; i < count; i++) {
+    putBits(utf8Bytes[i], 8);
+  }
+
+  putBits(0, Math.min(4, numDataCodewords * 8 - bitBuf.length));
+  while (bitBuf.length % 8 !== 0) bitBuf.push(0);
+
+  const data = [];
+  for (let i = 0; i < bitBuf.length; i += 8) {
+    let byte = 0;
+    for (let j = 0; j < 8; j++) {
+      byte = (byte << 1) | bitBuf[i + j];
+    }
+    data.push(byte);
+  }
+
+  let padToggle = false;
+  while (data.length < numDataCodewords) {
+    data.push(padToggle ? 0x11 : 0xec);
+    padToggle = !padToggle;
+  }
+
+  let gen = [1];
+  for (let i = 0; i < numECCodewords; i++) {
+    let nextGen = new Array(gen.length + 1).fill(0);
+    const factor = gfExp[i];
+    for (let j = 0; j < gen.length; j++) {
+      nextGen[j] ^= gfMul(gen[j], factor);
+      nextGen[j + 1] ^= gen[j];
+    }
+    gen = nextGen;
+  }
+
+  const remainder = new Array(numECCodewords).fill(0);
+  for (let i = 0; i < data.length; i++) {
+    const factor = data[i] ^ remainder[0];
+    for (let j = 0; j < numECCodewords - 1; j++) {
+      remainder[j] = remainder[j + 1] ^ gfMul(gen[numECCodewords - 1 - j], factor);
+    }
+    remainder[numECCodewords - 1] = gfMul(gen[0], factor);
+  }
+
+  const allCodewords = data.concat(remainder);
+  const matrix = Array.from({ length: size }, () => Array(size).fill(null));
+  const isFunction = Array.from({ length: size }, () => Array(size).fill(false));
+
+  function setFinder(r, c) {
+    for (let i = -1; i <= 7; i++) {
+      for (let j = -1; j <= 7; j++) {
+        const nr = r + i;
+        const nc = c + j;
+        if (nr >= 0 && nr < size && nc >= 0 && nc < size) {
+          isFunction[nr][nc] = true;
+          if (i >= 0 && i <= 6 && j >= 0 && j <= 6) {
+            const isBorder = (i === 0 || i === 6 || j === 0 || j === 6);
+            const isCenter = (i >= 2 && i <= 4 && j >= 2 && j <= 4);
+            matrix[nr][nc] = (isBorder || isCenter) ? 1 : 0;
+          } else {
+            matrix[nr][nc] = 0;
+          }
+        }
+      }
+    }
+  }
+
+  setFinder(0, 0);
+  setFinder(0, size - 7);
+  setFinder(size - 7, 0);
+
+  const alignPos = 22;
+  for (let i = -2; i <= 2; i++) {
+    for (let j = -2; j <= 2; j++) {
+      const nr = alignPos + i;
+      const nc = alignPos + j;
+      if (!isFunction[nr][nc]) {
+        isFunction[nr][nc] = true;
+        const isBorder = Math.abs(i) === 2 || Math.abs(j) === 2;
+        const isCenter = i === 0 && j === 0;
+        matrix[nr][nc] = (isBorder || isCenter) ? 1 : 0;
+      }
+    }
+  }
+
+  for (let i = 8; i < size - 8; i++) {
+    if (!isFunction[6][i]) {
+      isFunction[6][i] = true;
+      matrix[6][i] = (i % 2 === 0) ? 1 : 0;
+    }
+    if (!isFunction[i][6]) {
+      isFunction[i][6] = true;
+      matrix[i][6] = (i % 2 === 0) ? 1 : 0;
+    }
+  }
+
+  matrix[size - 8][8] = 1;
+  isFunction[size - 8][8] = true;
+
+  for (let i = 0; i < 9; i++) {
+    if (!isFunction[8][i]) { isFunction[8][i] = true; matrix[8][i] = 0; }
+    if (!isFunction[i][8]) { isFunction[i][8] = true; matrix[i][8] = 0; }
+  }
+  for (let i = size - 8; i < size; i++) {
+    if (!isFunction[8][i]) { isFunction[8][i] = true; matrix[8][i] = 0; }
+    if (!isFunction[i][8]) { isFunction[i][8] = true; matrix[i][8] = 0; }
+  }
+
+  let bitIdx = 0;
+  const totalBits = allCodewords.length * 8;
+  for (let right = size - 1; right > 0; right -= 2) {
+    if (right === 6) right--;
+    const upward = ((size - 1 - right) >> 1) % 2 === 0;
+    for (let vert = 0; vert < size; vert++) {
+      const r = upward ? (size - 1 - vert) : vert;
+      for (let c = right; c >= right - 1; c--) {
+        if (!isFunction[r][c]) {
+          let bit = 0;
+          if (bitIdx < totalBits) {
+            const byte = allCodewords[bitIdx >> 3];
+            bit = (byte >>> (7 - (bitIdx & 7))) & 1;
+            bitIdx++;
+          }
+          if ((r + c) % 2 === 0) {
+            bit ^= 1;
+          }
+          matrix[r][c] = bit;
+        }
+      }
+    }
+  }
+
+  const formatBits = [1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0];
+  for (let i = 0; i < 6; i++) matrix[8][i] = formatBits[i];
+  matrix[8][7] = formatBits[6];
+  matrix[8][8] = formatBits[7];
+  matrix[7][8] = formatBits[8];
+  for (let i = 9; i < 15; i++) matrix[14 - i][8] = formatBits[i];
+
+  for (let i = 0; i < 8; i++) matrix[8][size - 1 - i] = formatBits[i];
+  for (let i = 8; i < 15; i++) matrix[size - 15 + i][8] = formatBits[i];
+
+  return matrix;
+}
+
+function generateQRCodeSVG(text) {
+  try {
+    const matrix = generateQRMatrix(text);
+    const size = matrix.length;
+    let path = "";
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) {
+        if (matrix[r][c] === 1) {
+          path += `M${c + 2},${r + 2}h1v1h-1z `;
+        }
+      }
+    }
+    const viewBoxSize = size + 4;
+    return `<svg viewBox="0 0 ${viewBoxSize} ${viewBoxSize}" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+      <rect width="${viewBoxSize}" height="${viewBoxSize}" fill="#ffffff"/>
+      <path d="${path.trim()}" fill="#111827"/>
+    </svg>`;
+  } catch (err) {
+    console.error("QR Code generation error:", err);
+    return `<div style="text-align:center;padding:1rem;color:#94a3b8;font-size:0.8rem;">QR Code</div>`;
+  }
 }
