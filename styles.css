@@ -1540,6 +1540,42 @@ svg {
   font-size: 1.15rem;
 }
 
+.quick-cash-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.quick-cash-btn {
+  padding: 5px 10px;
+  background: var(--light-gray);
+  border: 1px solid var(--sage-green);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-primary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--forest-green);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.quick-cash-btn:hover {
+  background: var(--primary-green);
+  color: var(--white);
+  border-color: var(--primary-green);
+}
+
+.product-card.is-out-of-stock {
+  opacity: 0.6;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.product-card.is-out-of-stock::before {
+  background: var(--danger);
+  transform: scaleX(1);
+}
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;

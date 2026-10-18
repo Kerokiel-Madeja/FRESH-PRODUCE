@@ -104,10 +104,14 @@ function loadFromLocalStorage() {
     try {
       const parsed = JSON.parse(savedProducts);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        // Strip any residual emoji icons from legacy stored items
         products = parsed.map((p) => {
           const { icon, ...rest } = p;
-          return rest;
+          return {
+            ...rest,
+            id: Number(p.id),
+            stock: Number(p.stock) || 0,
+            price: Number(p.price) || 0,
+          };
         });
       }
     } catch (e) {
@@ -178,7 +182,7 @@ function initializeEventListeners() {
     .getElementById("close-stock")
     .addEventListener("click", closeStockModal);
 
-  // Checkout
+  // Checkout payment handlers
   document
     .getElementById("payment-amount")
     .addEventListener("input", calculateChange);
@@ -188,6 +192,32 @@ function initializeEventListeners() {
   document
     .getElementById("cancel-checkout")
     .addEventListener("click", closeCheckoutModal);
+
+  // Quick cash buttons
+  const exactCashBtn = document.getElementById("exact-cash-btn");
+  if (exactCashBtn) {
+    exactCashBtn.addEventListener("click", () => {
+      const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+      const tax = subtotal * (settings.taxRate / 100);
+      const total = subtotal + tax;
+      const input = document.getElementById("payment-amount");
+      if (input) {
+        input.value = total.toFixed(2);
+        calculateChange();
+      }
+    });
+  }
+
+  document.querySelectorAll(".quick-preset").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const amount = parseFloat(btn.dataset.cash);
+      const input = document.getElementById("payment-amount");
+      if (input) {
+        input.value = amount.toFixed(2);
+        calculateChange();
+      }
+    });
+  });
 
   // Stock update
   document
@@ -444,7 +474,7 @@ function renderProducts(searchQuery = null) {
   grid.innerHTML = filtered
     .map(
       (product) => `
-        <div class="product-card" onclick="addToCart(${product.id})" role="button" tabindex="0" aria-label="Add ${product.name} to cart">
+        <div class="product-card ${product.stock <= 0 ? "is-out-of-stock" : ""}" onclick="addToCart(${product.id})" role="button" tabindex="0" aria-label="Add ${product.name} to cart">
           <div class="product-icon-wrap">
             ${getProductIconMarkup(product)}
           </div>
@@ -462,13 +492,13 @@ function renderProducts(searchQuery = null) {
 }
 
 function getStockClass(stock) {
-  if (stock === 0) return "stock-out";
+  if (stock <= 0) return "stock-out";
   if (stock <= settings.lowStockThreshold) return "stock-low";
   return "";
 }
 
 function getStockStatus(stock) {
-  if (stock === 0) return "(Out of Stock)";
+  if (stock <= 0) return "(Out of Stock)";
   if (stock <= settings.lowStockThreshold) return "(Low Stock)";
   return "";
 }
@@ -484,20 +514,22 @@ function handleCategoryFilter(btn) {
 
 // ===== CART MANAGEMENT =====
 function addToCart(productId) {
-  const product = products.find((p) => p.id === productId);
+  const product = products.find((p) => Number(p.id) === Number(productId));
 
-  if (!product || product.stock === 0) {
-    alert("Product is out of stock.");
+  if (!product) return;
+
+  if (product.stock <= 0) {
+    alert(`Out of stock: ${product.name} has 0 ${product.unit} remaining.`);
     return;
   }
 
-  const existingItem = cart.find((item) => item.id === productId);
+  const existingItem = cart.find((item) => Number(item.id) === Number(productId));
 
   if (existingItem) {
     if (existingItem.quantity < product.stock) {
       existingItem.quantity++;
     } else {
-      alert("Not enough stock available.");
+      alert(`Only ${product.stock} ${product.unit} of ${product.name} available in stock.`);
       return;
     }
   } else {
@@ -569,8 +601,8 @@ function renderCart() {
 }
 
 function updateQuantity(productId, change) {
-  const product = products.find((p) => p.id === productId);
-  const cartItem = cart.find((item) => item.id === productId);
+  const product = products.find((p) => Number(p.id) === Number(productId));
+  const cartItem = cart.find((item) => Number(item.id) === Number(productId));
 
   if (!cartItem) return;
 
@@ -582,7 +614,7 @@ function updateQuantity(productId, change) {
   }
 
   if (product && newQuantity > product.stock) {
-    alert("Not enough stock available.");
+    alert(`Cannot add more than ${product.stock} ${product.unit} (current stock).`);
     return;
   }
 
@@ -591,7 +623,7 @@ function updateQuantity(productId, change) {
 }
 
 function removeFromCart(productId) {
-  cart = cart.filter((item) => item.id !== productId);
+  cart = cart.filter((item) => Number(item.id) !== Number(productId));
   renderCart();
 }
 
@@ -628,9 +660,18 @@ function updateCartSummary() {
   if (cartCountEl) cartCountEl.textContent = totalItems;
 }
 
-// ===== CHECKOUT =====
+// ===== CHECKOUT & STOCK DEDUCTION =====
 function openCheckoutModal() {
   if (cart.length === 0) return;
+
+  // Verify stock before opening modal
+  for (const item of cart) {
+    const product = products.find((p) => Number(p.id) === Number(item.id));
+    if (!product || product.stock < item.quantity) {
+      alert(`Cannot checkout: Insufficient stock for ${item.name}. Available: ${product ? product.stock : 0} ${item.unit}`);
+      return;
+    }
+  }
 
   const subtotal = cart.reduce(
     (sum, item) => sum + item.price * item.quantity,
@@ -640,11 +681,14 @@ function openCheckoutModal() {
   const total = subtotal + tax;
 
   document.getElementById("checkout-total").textContent = `₱${total.toFixed(2)}`;
-  document.getElementById("payment-amount").value = "";
-  document.getElementById("change-amount").textContent = "₱0.00";
+  
+  // Pre-fill exact payment amount so user can immediately complete sale
+  const paymentInput = document.getElementById("payment-amount");
+  paymentInput.value = total.toFixed(2);
+  calculateChange();
 
   document.getElementById("checkout-modal").classList.add("active");
-  document.getElementById("payment-amount").focus();
+  paymentInput.select();
 }
 
 function closeCheckoutModal() {
@@ -652,7 +696,8 @@ function closeCheckoutModal() {
 }
 
 function calculateChange() {
-  const payment = parseFloat(document.getElementById("payment-amount").value) || 0;
+  const paymentInput = document.getElementById("payment-amount");
+  const payment = parseFloat(paymentInput.value) || 0;
   const subtotal = cart.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0,
@@ -661,11 +706,19 @@ function calculateChange() {
   const total = subtotal + tax;
   const change = payment - total;
 
-  document.getElementById("change-amount").textContent = `₱${Math.max(0, change).toFixed(2)}`;
+  const changeDisplay = document.getElementById("change-amount");
+  if (changeDisplay) {
+    changeDisplay.textContent = `₱${Math.max(0, change).toFixed(2)}`;
+    changeDisplay.style.color = change < 0 ? "var(--danger)" : "var(--forest-green)";
+  }
 }
 
 function completeSale() {
-  const payment = parseFloat(document.getElementById("payment-amount").value) || 0;
+  if (cart.length === 0) {
+    alert("Cart is empty.");
+    return;
+  }
+
   const subtotal = cart.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0,
@@ -673,12 +726,37 @@ function completeSale() {
   const tax = subtotal * (settings.taxRate / 100);
   const total = subtotal + tax;
 
-  if (payment < total) {
-    alert("Insufficient payment amount.");
+  const paymentInput = document.getElementById("payment-amount");
+  let paymentVal = paymentInput.value.trim();
+  let payment = paymentVal === "" ? total : parseFloat(paymentVal);
+
+  if (isNaN(payment) || payment < total) {
+    alert(`Insufficient payment amount. Total is ₱${total.toFixed(2)}.`);
+    paymentInput.focus();
     return;
   }
 
-  // Create transaction
+  // Double-check stock availability before deduction
+  for (const item of cart) {
+    const product = products.find((p) => Number(p.id) === Number(item.id));
+    if (!product || product.stock < item.quantity) {
+      alert(`Insufficient stock for ${item.name}. Remaining available: ${product ? product.stock : 0} ${item.unit}.`);
+      return;
+    }
+  }
+
+  // DEDUCT STOCK ACCORDING TO ITEMS CHECKED OUT
+  const stockDeductionSummary = [];
+  cart.forEach((item) => {
+    const product = products.find((p) => Number(p.id) === Number(item.id));
+    if (product) {
+      const initialStock = product.stock;
+      product.stock = Math.max(0, product.stock - item.quantity);
+      stockDeductionSummary.push(`- ${product.name}: ${initialStock} -> ${product.stock} ${product.unit} (sold ${item.quantity})`);
+    }
+  });
+
+  // Create & record transaction
   const transaction = {
     id: Date.now(),
     date: new Date().toISOString(),
@@ -687,34 +765,30 @@ function completeSale() {
     tax: tax,
     total: total,
     payment: payment,
-    change: payment - total,
+    change: Math.max(0, payment - total),
   };
-
   transactions.unshift(transaction);
 
-  // Update stock
-  cart.forEach((item) => {
-    const product = products.find((p) => p.id === item.id);
-    if (product) {
-      product.stock -= item.quantity;
-    }
-  });
-
+  // Persist updated stocks and transaction to localStorage
   saveToLocalStorage();
 
   // Clear cart
   cart = [];
   renderCart();
+
+  // Refresh all screens so reduced stocks are immediately visible
   renderProducts();
+  renderProductsTable();
+  renderInventoryTable();
+  renderSalesTable();
+  updateAllStats();
 
   closeCheckoutModal();
   closeMobileCart();
 
   alert(
-    `Sale completed successfully.\nTotal: ₱${total.toFixed(2)}\nPayment: ₱${payment.toFixed(2)}\nChange: ₱${(payment - total).toFixed(2)}`,
+    `Sale Completed Successfully!\nTotal: ₱${total.toFixed(2)}\nPayment: ₱${payment.toFixed(2)}\nChange: ₱${(payment - total).toFixed(2)}\n\nStock Deducted:\n${stockDeductionSummary.join("\n")}`,
   );
-
-  updateAllStats();
 }
 
 // ===== PRODUCT MANAGEMENT (PRODUCTS PAGE) =====
@@ -764,6 +838,7 @@ function handleProductSubmit(e) {
   saveToLocalStorage();
   renderProducts();
   renderProductsTable();
+  renderInventoryTable();
   closeProductModal();
   updateAllStats();
 }
@@ -802,7 +877,7 @@ function renderProductsTable(searchQuery = null) {
           </td>
           <td><span class="category-pill cat-${product.category}">${capitalizeFirst(product.category)}</span></td>
           <td>₱${product.price.toFixed(2)}</td>
-          <td>${product.stock}</td>
+          <td><strong>${product.stock}</strong></td>
           <td>${product.unit}</td>
           <td>
             <div class="table-actions">
@@ -817,16 +892,17 @@ function renderProductsTable(searchQuery = null) {
 }
 
 function editProduct(product) {
-  const actualProduct = products.find((p) => p.id === product.id);
+  const actualProduct = products.find((p) => Number(p.id) === Number(product.id));
   openProductModal(actualProduct);
 }
 
 function deleteProduct(productId) {
   if (confirm("Are you sure you want to delete this product?")) {
-    products = products.filter((p) => p.id !== productId);
+    products = products.filter((p) => Number(p.id) !== Number(productId));
     saveToLocalStorage();
     renderProducts();
     renderProductsTable();
+    renderInventoryTable();
     updateAllStats();
   }
 }
@@ -840,13 +916,13 @@ function renderInventoryTable(searchQuery = null) {
 
   const mapped = products.map((product) => {
     const status =
-      product.stock === 0
+      product.stock <= 0
         ? "Out of Stock"
         : product.stock <= settings.lowStockThreshold
           ? "Low Stock"
           : "Good";
     const statusClass =
-      product.stock === 0
+      product.stock <= 0
         ? "status-out"
         : product.stock <= settings.lowStockThreshold
           ? "status-low"
@@ -883,7 +959,7 @@ function renderInventoryTable(searchQuery = null) {
             </div>
           </td>
           <td><span class="category-pill cat-${product.category}">${capitalizeFirst(product.category)}</span></td>
-          <td>${product.stock}</td>
+          <td><strong>${product.stock}</strong></td>
           <td>${product.unit}</td>
           <td><span class="status-badge ${product.statusClass}">${product.status}</span></td>
           <td>
@@ -902,7 +978,7 @@ function updateInventoryStats() {
   const lowStock = products.filter(
     (p) => p.stock > 0 && p.stock <= settings.lowStockThreshold,
   ).length;
-  const outOfStock = products.filter((p) => p.stock === 0).length;
+  const outOfStock = products.filter((p) => p.stock <= 0).length;
   const inventoryValue = products.reduce(
     (sum, p) => sum + p.price * p.stock,
     0,
@@ -920,7 +996,7 @@ function updateInventoryStats() {
 }
 
 function openStockModal(product) {
-  currentStockProduct = products.find((p) => p.id === product.id);
+  currentStockProduct = products.find((p) => Number(p.id) === Number(product.id));
   document.getElementById("stock-product-name").textContent = `Product: ${product.name}`;
   document.getElementById("stock-quantity").value = product.stock;
   document.getElementById("stock-modal").classList.add("active");
@@ -941,6 +1017,7 @@ function handleStockUpdate(e) {
 
   saveToLocalStorage();
   renderProducts();
+  renderProductsTable();
   renderInventoryTable();
   closeStockModal();
   updateAllStats();
@@ -1064,7 +1141,7 @@ function handleSalesFilter(btn) {
 }
 
 function viewTransactionDetails(transactionId) {
-  const transaction = transactions.find((t) => t.id === transactionId);
+  const transaction = transactions.find((t) => Number(t.id) === Number(transactionId));
   if (!transaction) return;
 
   const itemsList = transaction.items
@@ -1099,6 +1176,7 @@ function saveSettings() {
   saveToLocalStorage();
   updateCartSummary();
   renderProducts();
+  renderProductsTable();
   renderInventoryTable();
 
   alert("Settings saved successfully.");
