@@ -19,7 +19,8 @@
 
       body {
         font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+        background: #f1f4f6;
+        color: #2c3e50;
         min-height: 100vh;
         min-height: 100dvh;
         display: flex;
@@ -29,12 +30,14 @@
       }
 
       .container {
-        background: white;
-        border-radius: 24px;
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-top: 4px solid #27ae60;
+        border-radius: 6px;
         padding: 3rem 2.5rem;
         width: 100%;
         max-width: 600px;
-        box-shadow: 0 20px 60px rgba(16, 185, 129, 0.12), 0 8px 24px rgba(0, 0, 0, 0.06);
+        box-shadow: none;
         text-align: center;
       }
 
@@ -42,32 +45,34 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 80px;
-        height: 80px;
-        border-radius: 20px;
-        background: linear-gradient(135deg, #22c55e 0%, #15803d 100%);
-        color: white;
+        width: 72px;
+        height: 72px;
+        border-radius: 4px;
+        background: #27ae60;
+        color: #ffffff;
         margin-bottom: 1.25rem;
-        box-shadow: 0 10px 25px rgba(34, 197, 94, 0.35);
+        box-shadow: none;
       }
 
       .logo-icon-wrap svg {
-        width: 44px;
-        height: 44px;
+        width: 40px;
+        height: 40px;
       }
 
       h1 {
-        font-family: "Poppins", sans-serif;
-        color: #166534;
-        font-size: 2.25rem;
+        font-family: "Inter", sans-serif;
+        color: #2c3e50;
+        font-size: 2rem;
         font-weight: 700;
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.4rem;
+        letter-spacing: -0.02em;
         line-height: 1.2;
       }
 
       .tagline {
-        color: #6b7280;
-        font-size: 1.05rem;
+        color: #64748b;
+        font-size: 0.95rem;
+        font-weight: 500;
         margin-bottom: 2rem;
       }
 
@@ -76,45 +81,56 @@
         align-items: center;
         justify-content: center;
         gap: 0.75rem;
-        background: linear-gradient(135deg, #22c55e, #10b981);
-        color: white;
-        padding: 1.25rem 2.5rem;
-        border-radius: 14px;
+        background: #27ae60;
+        color: #ffffff;
+        padding: 1rem 2.25rem;
+        border-radius: 4px;
         text-decoration: none;
-        font-size: 1.15rem;
+        font-size: 1rem;
         font-weight: 700;
-        box-shadow: 0 10px 30px rgba(34, 197, 94, 0.3);
-        transition: all 0.25s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        box-shadow: none;
+        transition: background 0.15s ease-out, transform 0.15s ease-out;
         margin-bottom: 2rem;
       }
 
       .launch-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 15px 40px rgba(34, 197, 94, 0.4);
+        background: #219653;
+        transform: none;
+        box-shadow: none;
+      }
+
+      .launch-btn:active {
+        background: #1e824c;
+        transform: translateY(1px);
       }
 
       .launch-btn svg {
-        width: 20px;
-        height: 20px;
-        transition: transform 0.2s ease;
+        width: 18px;
+        height: 18px;
+        transition: none;
       }
 
       .launch-btn:hover svg {
-        transform: translateX(4px);
+        transform: none;
       }
 
       .features {
         text-align: left;
         margin-top: 1.5rem;
-        padding-top: 2rem;
-        border-top: 2px solid #f3f4f6;
+        padding-top: 1.75rem;
+        border-top: 1px solid #e2e8f0;
       }
 
       .features h2 {
-        font-family: "Poppins", sans-serif;
-        color: #166534;
+        font-family: "Inter", sans-serif;
+        color: #2c3e50;
         margin-bottom: 1.25rem;
-        font-size: 1.35rem;
+        font-size: 1.05rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
       }
 
       .feature-list {
@@ -128,8 +144,8 @@
         display: flex;
         align-items: flex-start;
         gap: 0.75rem;
-        color: #374151;
-        font-size: 0.95rem;
+        color: #334155;
+        font-size: 0.9rem;
         line-height: 1.4;
       }
 
@@ -139,9 +155,10 @@
         justify-content: center;
         width: 20px;
         height: 20px;
-        border-radius: 50%;
-        background: #dcfce7;
-        color: #16a34a;
+        border-radius: 2px;
+        background: #e8f8f0;
+        color: #27ae60;
+        border: 1px solid #a3e4d7;
         flex-shrink: 0;
         margin-top: 1px;
       }
@@ -152,11 +169,12 @@
       }
 
       .note {
-        background: #fef3c7;
-        border-left: 4px solid #f59e0b;
+        background: #fef5e7;
+        border: 1px solid #f8c471;
+        border-left: 4px solid #d35400;
         padding: 1.25rem;
         margin-top: 2rem;
-        border-radius: 10px;
+        border-radius: 4px;
         text-align: left;
       }
 
@@ -164,22 +182,24 @@
         display: flex;
         align-items: center;
         gap: 0.5rem;
-        color: #92400e;
+        color: #d35400;
         font-weight: 700;
-        font-size: 0.95rem;
+        font-size: 0.88rem;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
       }
 
       .note-header svg {
-        width: 18px;
-        height: 18px;
-        color: #d97706;
+        width: 17px;
+        height: 17px;
+        color: #d35400;
       }
 
       .note p {
         color: #78350f;
         margin-top: 0.5rem;
-        line-height: 1.55;
-        font-size: 0.9rem;
+        line-height: 1.5;
+        font-size: 0.88rem;
       }
 
       /* Responsive adjustments */
@@ -190,43 +210,43 @@
 
         .container {
           padding: 2rem 1.5rem;
-          border-radius: 18px;
+          border-radius: 4px;
         }
 
         h1 {
-          font-size: 1.85rem;
+          font-size: 1.7rem;
         }
 
         .tagline {
-          font-size: 0.95rem;
+          font-size: 0.9rem;
           margin-bottom: 1.5rem;
         }
 
         .launch-btn {
           width: 100%;
-          padding: 1.1rem 1.5rem;
-          font-size: 1.05rem;
+          padding: 0.9rem 1.5rem;
+          font-size: 0.95rem;
         }
       }
 
       @media (max-width: 400px) {
         .container {
-          padding: 1.75rem 1.15rem;
+          padding: 1.5rem 1rem;
         }
 
         h1 {
-          font-size: 1.6rem;
+          font-size: 1.45rem;
         }
 
         .logo-icon-wrap {
-          width: 68px;
-          height: 68px;
-          border-radius: 16px;
+          width: 58px;
+          height: 58px;
+          border-radius: 3px;
         }
 
         .logo-icon-wrap svg {
-          width: 36px;
-          height: 36px;
+          width: 32px;
+          height: 32px;
         }
       }
     </style>

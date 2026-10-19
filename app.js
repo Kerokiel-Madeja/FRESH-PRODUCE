@@ -1273,15 +1273,16 @@ function showReceiptModal(transaction) {
   if (payEl) payEl.textContent = `${currencySymbol}${(transaction.payment || transaction.total).toFixed(2)}`;
   if (changeEl) changeEl.textContent = `${currencySymbol}${(transaction.change || 0).toFixed(2)}`;
 
-  // QR Code
-  const qrContainer = document.getElementById("receipt-qr-container");
-  if (qrContainer) {
-    const qrPayload = `RECEIPT:${transaction.id}|STORE:${settings.storeName || "Fresh Produce"}|TOTAL:${transaction.total.toFixed(2)}|DATE:${formattedDate}`;
-    qrContainer.innerHTML = generateQRCodeSVG(qrPayload);
+  // Barcode (Short, sleek, not tall)
+  const barcodeContainer = document.getElementById("receipt-barcode-container");
+  const barcodeTextEl = document.getElementById("receipt-barcode-text");
+  const barcodeCode = `TX-${String(transaction.id || Date.now()).slice(-8)}`;
+  if (barcodeContainer) {
+    barcodeContainer.innerHTML = generateBarcodeSVG(barcodeCode, 34);
   }
-
-  // Cross-sell recommendations
-  renderReceiptRecommendations(transaction.items);
+  if (barcodeTextEl) {
+    barcodeTextEl.textContent = `* ${barcodeCode} *`;
+  }
 
   // Show modal
   receiptModal.classList.add("active");
@@ -1308,247 +1309,55 @@ function formatReceiptDate(d) {
   return `${day}.${month}.${year}, ${hours}:${minutes}:${seconds}`;
 }
 
-function renderReceiptRecommendations(currentItems = []) {
-  const grid = document.getElementById("receipt-recommend-grid");
-  if (!grid) return;
 
-  const boughtIds = new Set(currentItems.map((item) => Number(item.id)));
-  let candidates = products.filter((p) => !boughtIds.has(Number(p.id)) && p.stock > 0);
-  if (candidates.length < 3) {
-    candidates = products.filter((p) => p.stock > 0);
-  }
 
-  const picked = candidates.slice(0, 3);
-  const badges = ["Farm fresh", "Popular pick", "Pairs well"];
-  const currencySymbol = settings.currency === "PHP" ? "₱" : (settings.currency || "₱");
+// ===== 1D BARCODE VECTOR GENERATOR (CODE 39 - COMPACT 2018 FLAT) =====
+const CODE39_PATTERNS = {
+  "0": "000110100", "1": "100100001", "2": "001100001", "3": "101100000",
+  "4": "000110001", "5": "100110000", "6": "001110000", "7": "000100101",
+  "8": "100100100", "9": "001100100", "A": "100001001", "B": "001001001",
+  "C": "101001000", "D": "000011001", "E": "100011000", "F": "001011000",
+  "G": "000001101", "H": "100001100", "I": "001001100", "J": "000011100",
+  "K": "100000011", "L": "001000011", "M": "101000010", "N": "000010011",
+  "O": "100010010", "P": "001010010", "Q": "000000111", "R": "100000110",
+  "S": "001000110", "T": "000010110", "U": "110000001", "V": "011000001",
+  "W": "111000000", "X": "010010001", "Y": "110010000", "Z": "011010000",
+  "-": "010000101", ".": "110000100", " ": "011000100", "$": "010101000",
+  "/": "010100010", "+": "010001010", "%": "000101010", "*": "010010100"
+};
 
-  grid.innerHTML = picked
-    .map((product, idx) => {
-      const cat = (product.category || "vegetables").toLowerCase();
-      return `
-        <div class="receipt-rec-card">
-          <div class="receipt-rec-icon cat-${cat}">
-            ${getCategorySvg(cat)}
-          </div>
-          <span class="receipt-rec-badge">${badges[idx % badges.length]}</span>
-          <div class="receipt-rec-name" title="${product.name}">${product.name}</div>
-          <div class="receipt-rec-price">${currencySymbol}${product.price.toFixed(2)} / ${product.unit}</div>
-        </div>
-      `;
-    })
-    .join("");
-}
-
-// ===== QR CODE VECTOR GENERATOR (OFFLINE STANDALONE) =====
-function generateQRMatrix(text) {
-  const gfExp = new Array(512);
-  const gfLog = new Array(256);
-  let x = 1;
-  for (let i = 0; i < 255; i++) {
-    gfExp[i] = x;
-    gfLog[x] = i;
-    x <<= 1;
-    if (x & 256) x ^= 0x11d;
-  }
-  for (let i = 255; i < 512; i++) {
-    gfExp[i] = gfExp[i - 255];
-  }
-
-  function gfMul(x, y) {
-    if (x === 0 || y === 0) return 0;
-    return gfExp[gfLog[x] + gfLog[y]];
-  }
-
-  const size = 29;
-  const numDataCodewords = 44;
-  const numECCodewords = 26;
-
-  const utf8Bytes = [];
-  for (let i = 0; i < text.length; i++) {
-    let code = text.charCodeAt(i);
-    if (code < 128) utf8Bytes.push(code);
-    else if (code < 2048) {
-      utf8Bytes.push(192 | (code >> 6));
-      utf8Bytes.push(128 | (code & 63));
-    } else {
-      utf8Bytes.push(224 | (code >> 12));
-      utf8Bytes.push(128 | ((code >> 6) & 63));
-      utf8Bytes.push(128 | (code & 63));
-    }
-  }
-
-  const bitBuf = [];
-  function putBits(val, len) {
-    for (let i = len - 1; i >= 0; i--) {
-      bitBuf.push((val >>> i) & 1);
-    }
-  }
-
-  putBits(4, 4); // Byte mode
-  const count = Math.min(utf8Bytes.length, numDataCodewords - 3);
-  putBits(count, 8);
-  for (let i = 0; i < count; i++) {
-    putBits(utf8Bytes[i], 8);
-  }
-
-  putBits(0, Math.min(4, numDataCodewords * 8 - bitBuf.length));
-  while (bitBuf.length % 8 !== 0) bitBuf.push(0);
-
-  const data = [];
-  for (let i = 0; i < bitBuf.length; i += 8) {
-    let byte = 0;
-    for (let j = 0; j < 8; j++) {
-      byte = (byte << 1) | bitBuf[i + j];
-    }
-    data.push(byte);
-  }
-
-  let padToggle = false;
-  while (data.length < numDataCodewords) {
-    data.push(padToggle ? 0x11 : 0xec);
-    padToggle = !padToggle;
-  }
-
-  let gen = [1];
-  for (let i = 0; i < numECCodewords; i++) {
-    let nextGen = new Array(gen.length + 1).fill(0);
-    const factor = gfExp[i];
-    for (let j = 0; j < gen.length; j++) {
-      nextGen[j] ^= gfMul(gen[j], factor);
-      nextGen[j + 1] ^= gen[j];
-    }
-    gen = nextGen;
-  }
-
-  const remainder = new Array(numECCodewords).fill(0);
-  for (let i = 0; i < data.length; i++) {
-    const factor = data[i] ^ remainder[0];
-    for (let j = 0; j < numECCodewords - 1; j++) {
-      remainder[j] = remainder[j + 1] ^ gfMul(gen[numECCodewords - 1 - j], factor);
-    }
-    remainder[numECCodewords - 1] = gfMul(gen[0], factor);
-  }
-
-  const allCodewords = data.concat(remainder);
-  const matrix = Array.from({ length: size }, () => Array(size).fill(null));
-  const isFunction = Array.from({ length: size }, () => Array(size).fill(false));
-
-  function setFinder(r, c) {
-    for (let i = -1; i <= 7; i++) {
-      for (let j = -1; j <= 7; j++) {
-        const nr = r + i;
-        const nc = c + j;
-        if (nr >= 0 && nr < size && nc >= 0 && nc < size) {
-          isFunction[nr][nc] = true;
-          if (i >= 0 && i <= 6 && j >= 0 && j <= 6) {
-            const isBorder = (i === 0 || i === 6 || j === 0 || j === 6);
-            const isCenter = (i >= 2 && i <= 4 && j >= 2 && j <= 4);
-            matrix[nr][nc] = (isBorder || isCenter) ? 1 : 0;
-          } else {
-            matrix[nr][nc] = 0;
-          }
-        }
-      }
-    }
-  }
-
-  setFinder(0, 0);
-  setFinder(0, size - 7);
-  setFinder(size - 7, 0);
-
-  const alignPos = 22;
-  for (let i = -2; i <= 2; i++) {
-    for (let j = -2; j <= 2; j++) {
-      const nr = alignPos + i;
-      const nc = alignPos + j;
-      if (!isFunction[nr][nc]) {
-        isFunction[nr][nc] = true;
-        const isBorder = Math.abs(i) === 2 || Math.abs(j) === 2;
-        const isCenter = i === 0 && j === 0;
-        matrix[nr][nc] = (isBorder || isCenter) ? 1 : 0;
-      }
-    }
-  }
-
-  for (let i = 8; i < size - 8; i++) {
-    if (!isFunction[6][i]) {
-      isFunction[6][i] = true;
-      matrix[6][i] = (i % 2 === 0) ? 1 : 0;
-    }
-    if (!isFunction[i][6]) {
-      isFunction[i][6] = true;
-      matrix[i][6] = (i % 2 === 0) ? 1 : 0;
-    }
-  }
-
-  matrix[size - 8][8] = 1;
-  isFunction[size - 8][8] = true;
-
-  for (let i = 0; i < 9; i++) {
-    if (!isFunction[8][i]) { isFunction[8][i] = true; matrix[8][i] = 0; }
-    if (!isFunction[i][8]) { isFunction[i][8] = true; matrix[i][8] = 0; }
-  }
-  for (let i = size - 8; i < size; i++) {
-    if (!isFunction[8][i]) { isFunction[8][i] = true; matrix[8][i] = 0; }
-    if (!isFunction[i][8]) { isFunction[i][8] = true; matrix[i][8] = 0; }
-  }
-
-  let bitIdx = 0;
-  const totalBits = allCodewords.length * 8;
-  for (let right = size - 1; right > 0; right -= 2) {
-    if (right === 6) right--;
-    const upward = ((size - 1 - right) >> 1) % 2 === 0;
-    for (let vert = 0; vert < size; vert++) {
-      const r = upward ? (size - 1 - vert) : vert;
-      for (let c = right; c >= right - 1; c--) {
-        if (!isFunction[r][c]) {
-          let bit = 0;
-          if (bitIdx < totalBits) {
-            const byte = allCodewords[bitIdx >> 3];
-            bit = (byte >>> (7 - (bitIdx & 7))) & 1;
-            bitIdx++;
-          }
-          if ((r + c) % 2 === 0) {
-            bit ^= 1;
-          }
-          matrix[r][c] = bit;
-        }
-      }
-    }
-  }
-
-  const formatBits = [1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0];
-  for (let i = 0; i < 6; i++) matrix[8][i] = formatBits[i];
-  matrix[8][7] = formatBits[6];
-  matrix[8][8] = formatBits[7];
-  matrix[7][8] = formatBits[8];
-  for (let i = 9; i < 15; i++) matrix[14 - i][8] = formatBits[i];
-
-  for (let i = 0; i < 8; i++) matrix[8][size - 1 - i] = formatBits[i];
-  for (let i = 8; i < 15; i++) matrix[size - 15 + i][8] = formatBits[i];
-
-  return matrix;
-}
-
-function generateQRCodeSVG(text) {
+function generateBarcodeSVG(text, height = 34) {
   try {
-    const matrix = generateQRMatrix(text);
-    const size = matrix.length;
-    let path = "";
-    for (let r = 0; r < size; r++) {
-      for (let c = 0; c < size; c++) {
-        if (matrix[r][c] === 1) {
-          path += `M${c + 2},${r + 2}h1v1h-1z `;
+    const raw = String(text || "").toUpperCase().replace(/[^0-9A-Z\-\.\ \$\x2F\+\%]/g, "");
+    const clean = "*" + (raw || "0000") + "*";
+    const narrow = 1.35;
+    const wide = 3.1;
+    const gap = 1.35;
+    let x = 6;
+    let rects = "";
+
+    for (let i = 0; i < clean.length; i++) {
+      const pattern = CODE39_PATTERNS[clean[i]] || CODE39_PATTERNS["*"];
+      for (let p = 0; p < 9; p++) {
+        const isBar = p % 2 === 0;
+        const w = pattern[p] === "1" ? wide : narrow;
+        if (isBar) {
+          rects += `<rect x="${x.toFixed(1)}" y="0" width="${w.toFixed(1)}" height="${height}" fill="#1a252f"/>`;
         }
+        x += w;
+      }
+      if (i < clean.length - 1) {
+        x += gap;
       }
     }
-    const viewBoxSize = size + 4;
-    return `<svg viewBox="0 0 ${viewBoxSize} ${viewBoxSize}" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
-      <rect width="${viewBoxSize}" height="${viewBoxSize}" fill="#ffffff"/>
-      <path d="${path.trim()}" fill="#111827"/>
+    x += 6;
+    const totalWidth = Math.ceil(x);
+    return `<svg viewBox="0 0 ${totalWidth} ${height}" height="${height}" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+      <rect width="${totalWidth}" height="${height}" fill="#ffffff"/>
+      ${rects}
     </svg>`;
   } catch (err) {
-    console.error("QR Code generation error:", err);
-    return `<div style="text-align:center;padding:1rem;color:#94a3b8;font-size:0.8rem;">QR Code</div>`;
+    console.error("Barcode generation error:", err);
+    return '<div style="text-align:center;padding:0.5rem;color:#94a3b8;font-size:0.8rem;">Barcode</div>';
   }
 }
