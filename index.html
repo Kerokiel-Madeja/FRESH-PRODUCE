@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quick Start - Fresh Produce POS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #f1f4f6;
+        color: #2c3e50;
+        min-height: 100vh;
+        min-height: 100dvh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+      }
+
+      .container {
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-top: 4px solid #27ae60;
+        border-radius: 6px;
+        padding: 3rem 2.5rem;
+        width: 100%;
+        max-width: 600px;
+        box-shadow: none;
+        text-align: center;
+      }
+
+      .logo-icon-wrap {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 72px;
+        height: 72px;
+        border-radius: 4px;
+        background: #27ae60;
+        color: #ffffff;
+        margin-bottom: 1.25rem;
+        box-shadow: none;
+      }
+
+      .logo-icon-wrap svg {
+        width: 40px;
+        height: 40px;
+      }
+
+      h1 {
+        font-family: "Inter", sans-serif;
+        color: #2c3e50;
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.4rem;
+        letter-spacing: -0.02em;
+        line-height: 1.2;
+      }
+
+      .tagline {
+        color: #64748b;
+        font-size: 0.95rem;
+        font-weight: 500;
+        margin-bottom: 2rem;
+      }
+
+      .launch-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        background: #27ae60;
+        color: #ffffff;
+        padding: 1rem 2.25rem;
+        border-radius: 4px;
+        text-decoration: none;
+        font-size: 1rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        box-shadow: none;
+        transition: background 0.15s ease-out, transform 0.15s ease-out;
+        margin-bottom: 2rem;
+      }
+
+      .launch-btn:hover {
+        background: #219653;
+        transform: none;
+        box-shadow: none;
+      }
+
+      .launch-btn:active {
+        background: #1e824c;
+        transform: translateY(1px);
+      }
+
+      .launch-btn svg {
+        width: 18px;
+        height: 18px;
+        transition: none;
+      }
+
+      .launch-btn:hover svg {
+        transform: none;
+      }
+
+      .features {
+        text-align: left;
+        margin-top: 1.5rem;
+        padding-top: 1.75rem;
+        border-top: 1px solid #e2e8f0;
+      }
+
+      .features h2 {
+        font-family: "Inter", sans-serif;
+        color: #2c3e50;
+        margin-bottom: 1.25rem;
+        font-size: 1.05rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+
+      .feature-list {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+
+      .feature-list li {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        color: #334155;
+        font-size: 0.9rem;
+        line-height: 1.4;
+      }
+
+      .feature-bullet {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 20px;
+        height: 20px;
+        border-radius: 2px;
+        background: #e8f8f0;
+        color: #27ae60;
+        border: 1px solid #a3e4d7;
+        flex-shrink: 0;
+        margin-top: 1px;
+      }
+
+      .feature-bullet svg {
+        width: 12px;
+        height: 12px;
+      }
+
+      .note {
+        background: #fef5e7;
+        border: 1px solid #f8c471;
+        border-left: 4px solid #d35400;
+        padding: 1.25rem;
+        margin-top: 2rem;
+        border-radius: 4px;
+        text-align: left;
+      }
+
+      .note-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #d35400;
+        font-weight: 700;
+        font-size: 0.88rem;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+      }
+
+      .note-header svg {
+        width: 17px;
+        height: 17px;
+        color: #d35400;
+      }
+
+      .note p {
+        color: #78350f;
+        margin-top: 0.5rem;
+        line-height: 1.5;
+        font-size: 0.88rem;
+      }
+
+      /* Responsive adjustments */
+      @media (max-width: 640px) {
+        body {
+          padding: 1rem;
+        }
+
+        .container {
+          padding: 2rem 1.5rem;
+          border-radius: 4px;
+        }
+
+        h1 {
+          font-size: 1.7rem;
+        }
+
+        .tagline {
+          font-size: 0.9rem;
+          margin-bottom: 1.5rem;
+        }
+
+        .launch-btn {
+          width: 100%;
+          padding: 0.9rem 1.5rem;
+          font-size: 0.95rem;
+        }
+      }
+
+      @media (max-width: 400px) {
+        .container {
+          padding: 1.5rem 1rem;
+        }
+
+        h1 {
+          font-size: 1.45rem;
+        }
+
+        .logo-icon-wrap {
+          width: 58px;
+          height: 58px;
+          border-radius: 3px;
+        }
+
+        .logo-icon-wrap svg {
+          width: 32px;
+          height: 32px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="logo-icon-wrap" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
+          <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
+        </svg>
+      </div>
+      <h1>Fresh Produce POS</h1>
+      <p class="tagline">Philippine Wet Market Point of Sale System</p>
+
+      <a href="app.html" class="launch-btn">
+        <span>Launch Application</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 12h14"></path>
+          <path d="m12 5 7 7-7 7"></path>
+        </svg>
+      </a>
+
+      <div class="features">
+        <h2>What's Included</h2>
+        <ul class="feature-list">
+          <li>
+            <span class="feature-bullet">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </span>
+            <span>Complete POS system with shopping cart</span>
+          </li>
+          <li>
+            <span class="feature-bullet">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </span>
+            <span>32 pre-loaded Philippine market products</span>
+          </li>
+          <li>
+            <span class="feature-bullet">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </span>
+            <span>Inventory management &amp; stock tracking</span>
+          </li>
+          <li>
+            <span class="feature-bullet">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </span>
+            <span>Sales reporting &amp; analytics</span>
+          </li>
+          <li>
+            <span class="feature-bullet">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </span>
+            <span>Nature-inspired green responsive interface</span>
+          </li>
+          <li>
+            <span class="feature-bullet">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </span>
+            <span>Collapsible desktop sidebar &amp; mobile bottom navigation</span>
+          </li>
+          <li>
+            <span class="feature-bullet">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </span>
+            <span>Automatic tax calculation (12% VAT)</span>
+          </li>
+          <li>
+            <span class="feature-bullet">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </span>
+            <span>Local data storage (no internet needed)</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="note">
+        <div class="note-header">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M12 16v-4"></path>
+            <path d="M12 8h.01"></path>
+          </svg>
+          <span>First Time User Guide</span>
+        </div>
+        <p>
+          The system is ready to use immediately. Navigate using the menu. Start by exploring the Point of Sale page to make your first transaction. All data is saved automatically in your browser.
+        </p>
+      </div>
+    </div>
+  </body>
+</html>
